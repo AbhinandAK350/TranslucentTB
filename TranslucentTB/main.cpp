@@ -36,6 +36,8 @@
 
 #pragma region Data
 
+HWND hwnd;
+
 enum class EXITREASON {
 	NewInstance,		// New instance told us to exit
 	UserAction,			// Triggered by the user
@@ -394,6 +396,7 @@ void RefreshMenu(HMENU menu)
 BOOL CALLBACK EnumWindowsProcess(const HWND hWnd, LPARAM)
 {
 	const Window window(hWnd);
+	hwnd = hWnd;
 	// DWMWA_CLOAKED should take care of checking if it's on the current desktop.
 	// But that's undocumented behavior.
 	// Do both but with on_current_desktop last.
@@ -426,6 +429,7 @@ BOOL CALLBACK EnumWindowsProcess(const HWND hWnd, LPARAM)
 
 void SetTaskbarBlur()
 {
+	const Window window(hwnd);
 	static uint8_t counter = 10;
 
 	std::lock_guard guard(run.taskbars_mutex);
@@ -449,18 +453,35 @@ void SetTaskbarBlur()
 		const Window fg_window = Window::ForegroundWindow();
 		if (fg_window != Window::NullWindow && run.taskbars.count(fg_window.monitor()) != 0)
 		{
-			if (Config::CORTANA_ENABLED && !run.start_opened && !fg_window.get_attribute<BOOL>(DWMWA_CLOAKED))
+			
+			if (window.visible() && window.state() == SW_MAXIMIZE && !window.get_attribute<BOOL>(DWMWA_CLOAKED) &&
+				!Blacklist::IsBlacklisted(window) && window.on_current_desktop() && run.taskbars.count(window.monitor()) != 0)
 			{
-				const auto title = fg_window.filename();
-				if (Util::IgnoreCaseStringEquals(*title, L"SearchUI.exe") || Util::IgnoreCaseStringEquals(*title, L"SearchApp.exe"))
+				if (Config::CORTANA_ENABLED && !run.start_opened && !fg_window.get_attribute<BOOL>(DWMWA_CLOAKED))
 				{
-					run.taskbars.at(fg_window.monitor()).second = &Config::CORTANA_APPEARANCE;
+					const auto title = fg_window.filename();
+					if (Util::IgnoreCaseStringEquals(*title, L"SearchUI.exe") || Util::IgnoreCaseStringEquals(*title, L"SearchApp.exe"))
+					{
+						run.taskbars.at(fg_window.monitor()).second = &Config::MAXIMISED_APPEARANCE;
+					}
 				}
-			}
+				else
+				{
+					const auto title = fg_window.filename();
+					if (Util::IgnoreCaseStringEquals(*title, L"SearchUI.exe") || Util::IgnoreCaseStringEquals(*title, L"SearchApp.exe"))
+					{
+						run.taskbars.at(fg_window.monitor()).second = &Config::CORTANA_APPEARANCE;
+					}
+				}
 
-			if (Config::START_ENABLED && run.start_opened)
-			{
-				run.taskbars.at(fg_window.monitor()).second = &Config::START_APPEARANCE;
+				if (Config::START_ENABLED && run.start_opened)
+				{
+					run.taskbars.at(fg_window.monitor()).second = &Config::MAXIMISED_APPEARANCE;
+				}
+				else
+				{
+					run.taskbars.at(fg_window.monitor()).second = &Config::START_APPEARANCE;
+				}
 			}
 		}
 
