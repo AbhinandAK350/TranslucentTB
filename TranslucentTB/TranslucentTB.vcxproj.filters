@@ -64,9 +64,6 @@
     <ClCompile Include="findwindowiterator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="autostart_desktop.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="autostart_store.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
