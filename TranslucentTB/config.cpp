@@ -122,7 +122,7 @@ void Config::Save(const std::wstring &file)
 	configstream << L"dynamic-timeline=" << GetBoolText(TIMELINE_ENABLED) << std::endl;
 	configstream << L"dynamic-timeline-accent=" << GetAccentText(TIMELINE_APPEARANCE.ACCENT) << std::endl;
 	configstream << L"dynamic-timeline-color=" << GetColorText(TIMELINE_APPEARANCE.COLOR) << L" ; A color in hexadecimal notation." << std::endl;
-	configstream << L"dynamic-timeline-opacity=" << GetOpacityText(TIMELINE_APPEARANCE.COLOR) << L"  ; A value in the range 0 to 255." << std::endl;
+	configstream << L"dynamic-timeline-opacity=" << "100" << L"  ; A value in the range 0 to 255." << std::endl;
 
 	configstream << std::endl;
 	configstream << L"; Controls how the Aero Peek button behaves (dynamic, show or hide)" << std::endl;
