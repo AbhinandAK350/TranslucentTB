@@ -580,14 +580,12 @@ void InitializeTray(const HINSTANCE &hInstance)
 	{
 		static TrayContextMenu tray(window, MAKEINTRESOURCE(TRAYICON), MAKEINTRESOURCE(IDR_POPUP_MENU), hInstance);
 
-		tray.BindColor(IDM_REGULAR_COLOR, Config::REGULAR_APPEARANCE.COLOR);
 		tray.BindEnum(Config::REGULAR_APPEARANCE.ACCENT, REGULAR_BUTTOM_MAP);
 
 
 		tray.BindBool(IDM_MAXIMISED,      Config::MAXIMISED_ENABLED,         TrayContextMenu::Toggle);
 		tray.BindBool(IDM_MAXIMISED_PEEK, Config::MAXIMISED_ENABLED,         TrayContextMenu::ControlsEnabled);
 		tray.BindBool(IDM_MAXIMISED_PEEK, Config::MAXIMISED_REGULAR_ON_PEEK, TrayContextMenu::Toggle);
-		tray.BindColor(IDM_MAXIMISED_COLOR, Config::MAXIMISED_APPEARANCE.COLOR);
 		tray.BindEnum(Config::MAXIMISED_APPEARANCE.ACCENT, MAXIMISED_BUTTON_MAP);
 		for (const auto &[_, id] : MAXIMISED_BUTTON_MAP)
 		{
@@ -596,7 +594,6 @@ void InitializeTray(const HINSTANCE &hInstance)
 
 
 		tray.BindBool(IDM_START, Config::START_ENABLED, TrayContextMenu::Toggle);
-		tray.BindColor(IDM_START_COLOR, Config::START_APPEARANCE.COLOR);
 		tray.BindEnum(Config::START_APPEARANCE.ACCENT, START_BUTTON_MAP);
 		for (const auto &[_, id] : START_BUTTON_MAP)
 		{
@@ -604,7 +601,6 @@ void InitializeTray(const HINSTANCE &hInstance)
 		}
 
 		tray.BindBool(IDM_CORTANA, Config::CORTANA_ENABLED, TrayContextMenu::Toggle);
-		tray.BindColor(IDM_CORTANA_COLOR, Config::CORTANA_APPEARANCE.COLOR);
 		tray.BindEnum(Config::CORTANA_APPEARANCE.ACCENT, CORTANA_BUTTON_MAP);
 		for (const auto &[_, id] : CORTANA_BUTTON_MAP)
 		{
@@ -613,7 +609,6 @@ void InitializeTray(const HINSTANCE &hInstance)
 
 
 		tray.BindBool(IDM_TIMELINE, Config::TIMELINE_ENABLED, TrayContextMenu::Toggle);
-		tray.BindColor(IDM_TIMELINE_COLOR, Config::TIMELINE_APPEARANCE.COLOR);
 		tray.BindEnum(Config::TIMELINE_APPEARANCE.ACCENT, TIMELINE_BUTTON_MAP);
 		for (const auto &[_, id] : TIMELINE_BUTTON_MAP)
 		{
@@ -803,13 +798,6 @@ int WINAPI wWinMain(const HINSTANCE hInstance, HINSTANCE, wchar_t *, int)
 	{
 		ErrorHandle(app_visibility->Unadvise(av_cookie), Error::Level::Log, L"Failed to unregister app visibility sink.");
 	}
-
-	// Close all open CPicker windows to avoid:
-	// 1. Saving the colors currently previewed.
-	// 2. Direct2D and Direct3D bothering us about leaks in debug mode (because CPicker gets unloaded after Direct2D so Direct2D
-	//    does a leak check before CPicker even has a chance to cleanup anything). We don't care about them because we are closing,
-	//    and if we have actual leaks, they won't be drowned in the noise since closing the window will make CPicker cleanup.
-	win32::ClosePickers();
 
 	// If it's a new instance, don't save or restore taskbar to default
 	if (run.exit_reason != EXITREASON::NewInstance)

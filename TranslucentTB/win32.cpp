@@ -13,7 +13,6 @@
 #include <winrt/base.h>
 
 #include "autofree.hpp"
-#include "../CPicker/ccolourpicker.hpp"
 #include "clipboardcontext.hpp"
 #include "common.hpp"
 #include "ttberror.hpp"
@@ -25,32 +24,6 @@ const user32::pSetWindowCompositionAttribute user32::SetWindowCompositionAttribu
 	);
 
 std::wstring win32::m_ExeLocation;
-std::mutex win32::m_PickerThreadsLock;
-std::vector<DWORD> win32::m_PickerThreads;
-
-DWORD win32::PickerThreadProc(LPVOID data)
-{
-	const HRESULT hr = CColourPicker(*reinterpret_cast<uint32_t *>(data)).CreateColourPicker();
-	const DWORD tid = GetCurrentThreadId();
-	{
-		std::lock_guard guard(m_PickerThreadsLock);
-		for (DWORD &i_tid : m_PickerThreads)
-		{
-			if (i_tid == tid)
-			{
-				std::swap(i_tid, m_PickerThreads.back());
-				m_PickerThreads.pop_back();
-				break;
-			}
-		}
-	}
-	if (FAILED(hr))
-	{
-		ErrorHandle(hr, Error::Level::Error, L"An error occured in the color picker!");
-	}
-
-	return 0;
-}
 
 BOOL win32::EnumThreadWindowsProc(HWND hwnd, LPARAM lParam)
 {
@@ -279,51 +252,6 @@ void win32::OpenLink(const std::wstring &link)
 		{
 			CopyToClipboard(link);
 		}
-	}
-}
-
-DWORD win32::PickColor(uint32_t &color)
-{
-	DWORD threadId;
-	const winrt::handle hThread(CreateThread(nullptr, 0, PickerThreadProc, &color, CREATE_SUSPENDED, &threadId));
-
-	if (hThread)
-	{
-		{
-			std::lock_guard guard(m_PickerThreadsLock);
-			m_PickerThreads.emplace_back(threadId);
-		}
-
-		ResumeThread(hThread.get());
-		return threadId;
-	}
-	else
-	{
-		LastErrorHandle(Error::Level::Error, L"Failed to spawn color picker thread!");
-		return 0;
-	}
-}
-
-void win32::ClosePickers()
-{
-	std::unique_lock guard(m_PickerThreadsLock);
-	while (m_PickerThreads.size() != 0)
-	{
-		const DWORD tid = *m_PickerThreads.begin();
-		bool needs_wait = false;
-		guard.unlock();
-		EnumThreadWindows(tid, EnumThreadWindowsProc, reinterpret_cast<LPARAM>(&needs_wait));
-
-		if (needs_wait)
-		{
-			const winrt::handle thread(OpenThread(SYNCHRONIZE, FALSE, tid));
-			if (thread)
-			{
-				WaitForSingleObject(thread.get(), INFINITE);
-			}
-		}
-
-		guard.lock();
 	}
 }
 

@@ -113,11 +113,6 @@ public:
 		});
 	}
 
-	inline void BindColor(unsigned int item, uint32_t &color)
-	{
-		RegisterContextMenuCallback(item, std::bind(&win32::PickColor, std::ref(color)));
-	}
-
 	inline void RegisterCustomRefresh(const std::function<void(HMENU menu)> &function)
 	{
 		m_RefreshFunctions.push_back(std::bind(function, m_Menu));
